@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Find my way</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <script src="https://rawgit.com/schmich/instascan-builds/master/instascan.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.95.1/js/materialize.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.95.1/css/materialize.min.css">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+    integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+  <style type="text/css">
+    #sligoLogo {
+      margin-left: 2em;
+    }
+
+    .container {
+      background-image: url('./old-paper-bg.jpg');
+    }
+
+    .logo {
+      margin-top: 1em;
+      /* background-color: red; */
+    }
+
+    .header {
+      margin-top: 1em;
+      vertical-align: middle;
+      /* background-color: aqua; */
+    }
+
+    #preview {
+      margin-left: 2em;
+    }
+
+    .app {
+      padding-bottom: 2em;
+    }
+
+    .tooLate {
+      text-align: center;
+      color: red;
+      font-size: 2em;
+    }
+
+    .onTime {
+      text-align: center;
+      color: green;
+      font-size: 2em;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="row">
+      <div class="col-2 logo">
+        <img src="./Campus-Connect.png" id="sligoLogo" alt="Sligo logo" width="90px">
+      </div>
+      <div class="col-8 header">
+        <h1>Find my way</h1>
+        <p>Please scan your QR Code to get directions to your class room.</p>
+      </div>
+    </div>
+    <div class="row app">
+      <div class="col-8 offset-s2">
+        <video id="preview"></video>
+      </div>
+      <div class="col-4 offset-s2" id="directions" style="display: none;">
+      </div>
+    </div>
+    <form class="col s8 offset-s2" style="display: none;">
+      <div class="row">
+        <label>Choose voice</label>
+        <select id="voices"></select>
+      </div>
+      <div class="row">
+        <div class="col s6">
+          <label>Rate</label>
+          <p class="range-field">
+            <input type="range" id="rate" min="1" max="100" value="10" />
+          </p>
+        </div>
+        <div class="col s6">
+          <label>Pitch</label>
+          <p class="range-field">
+            <input type="range" id="pitch" min="0" max="2" value="1" />
+          </p>
+        </div>
+        <div class="col s12">
+          <p>N.B. Rate and Pitch only work with native voice.</p>
+        </div>
+      </div>
+      <div class="row">
+        <div class="input-field col s12">
+          <textarea id="message" class="materialize-textarea"></textarea>
+          <label>Write message</label>
+        </div>
+      </div>
+      <a href="#" id="speak" class="waves-effect waves-light btn">Speak</a>
+    </form>
+  </div>
+
+  <div id="modal1" class="modal">
+    <h4>Speech Synthesis not supported</h4>
+    <p>Your browser does not support speech synthesis.</p>
+    <p>We recommend you use Google Chrome.</p>
+    <div class="action-bar">
+      <a href="#" class="waves-effect waves-green btn-flat modal-action modal-close">Close</a>
+    </div>
+  </div>
+
+  <script type="text/javascript">
+    let scanner = new Instascan.Scanner({
+      video: document.getElementById('preview')
+    });
+    var day;
+    var startTime;
+    var endTime;
+    var subject;
+    var room;
+
+    var roomsItineraries = [{
+        'number': 'E2004',
+        'itinerary': 'Go left and right then up and down'
+      },
+      {
+        'number': 'E2001',
+        'itinerary': 'Go up and down'
+      }
+    ];
+
+    scanner.addListener('scan', function (content) {
+      console.log("scan content:\n" + content);
+      var data = content.split('\n');
+      // get data
+      if (data.length == 4) {
+        day = data[0].split(' ')[1];
+        startTime = data[1].split(' ')[1];
+        endTime = data[1].split(' ')[3];
+        subject = data[2].split(' ')[1];
+        room = data[3].split(' ')[1];
+        showData(data);
+        $('#voices option:eq(1)').prop('selected', true);
+        $('#message').val(content);
+        $('#speak').click();
+        classCheck(day, startTime, endTime, room);
+      } else {
+        $('#directions').fadeOut("slow");
+        $('#directions').empty();
+        $('#directions').append("<h2>Your request</h2>");
+        $('#directions').append("<p>" + data + "</p>");
+        $('#directions').fadeIn("slow");
+      }
+    });
+
+    function showData(data) {
+      $('#directions').fadeOut("slow");
+      // empty text zone
+      $('#directions').empty();
+      // formated text
+      $('#directions').append("<h2>Your request</h2>");
+      $('#directions').append("<p>" + data[0] + "</p>");
+      $('#directions').append("<p>" + data[1] + "</p>");
+      $('#directions').append("<p>" + data[2] + "</p>");
+      $('#directions').append("<p>" + data[3] + "</p>");
+      $('#directions').fadeIn("slow");
+    }
+
+    function classCheck(day, startTime, endTime, room) {
+      var now = new Date();
+      var dayNumber;
+      switch (day) {
+        case 'Monday':
+          dayNumber = 1;
+          break;
+        case 'Tuesday':
+          dayNumber = 2;
+          break;
+        case 'Wednesday':
+          dayNumber = 3;
+          break;
+        case 'Thursday':
+          dayNumber = 4;
+          break;
+        case 'Friday':
+          dayNumber = 5;
+          break;
+        case 'Saturday':
+          dayNumber = 6;
+          break;
+        case 'Sunday':
+          dayNumber = 0;
+          break;
+      }
+
+      console.log("jour: " + now.getDay());
+      console.log("heure: " + now.getHours());
+      console.log("class day: " + day);
+      if (now.getDay() > dayNumber) {
+        $('#voices option:eq(1)').prop('selected', true);
+        $('#message').val("Sorry, but it's too late for intend to this class. Wake up sooner next time!!!");
+        $('#speak').click();
+        $('#directions').append("<p class='tooLate'><strong>Too late!!!</strong></p>");
+      } else if (now.getDay() == dayNumber) {
+        if (now.getHours() > startTime.split(':')[0]) {
+          $('#voices option:eq(1)').prop('selected', true);
+          $('#message').val("Sorry, but it's too late for intend to this class. Wake up sooner next time!!!");
+          $('#speak').click();
+          $('#directions').append("<p class='tooLate'><strong>Too late!!!</strong></p>");
+        }
+      } else {
+        for (var i = 0; i < roomsItineraries.length; i++) {
+          if (roomsItineraries[i].number == room) {
+            $('#voices option:eq(1)').prop('selected', true);
+            $('#message').val(roomsItineraries[i].itinerary);
+            $('#speak').click();
+            $('#directions').append("<p class='onTime'><strong>" + roomsItineraries[i].itinerary + "</strong></p>");
+          }
+        }
+      }
+    }
+
+    Instascan.Camera.getCameras().then(function (cameras) {
+      console.log(cameras.length);
+      if (cameras.length > 0) {
+        for (var i = 0; i < cameras.length; i++) {
+          console.log("camera(" + i + "): " + cameras[i]);
+        }
+        scanner.start(cameras[0]);
+      } else {
+        console.error('No cameras found.');
+      }
+    }).catch(function (e) {
+      console.error(e);
+    });
+
+    $(function () {
+      if ('speechSynthesis' in window) {
+        speechSynthesis.onvoiceschanged = function () {
+          var $voicelist = $('#voices');
+
+          if ($voicelist.find('option').length == 0) {
+            speechSynthesis.getVoices().forEach(function (voice, index) {
+              var $option = $('<option>')
+                .val(index)
+                .html(voice.name + (voice.default ? ' (default)' : ''));
+                console.log("voice: "+voice.name+" ; index: "+index);
+              $voicelist.append($option);
+            });
+
+            $voicelist.material_select();
+          }
+        }
+
+        $('#speak').click(function () {
+          var text = $('#message').val();
+          var msg = new SpeechSynthesisUtterance();
+          var voices = window.speechSynthesis.getVoices();
+          msg.voice = voices[$('#voices').val()];
+          console.log("VoiceChoice: "+msg.voice);
+          msg.rate = $('#rate').val() / 10;
+          msg.pitch = $('#pitch').val();
+          msg.text = text;
+
+          msg.onend = function (e) {
+            console.log('Finished in ' + event.elapsedTime + ' seconds.');
+          };
+
+          speechSynthesis.speak(msg);
+        })
+      } else {
+        $('#modal1').openModal();
+      }
+    });
+  </script>
+
+</body>
+
+</html>
