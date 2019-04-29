@@ -120,13 +120,13 @@
     var subject;
     var room;
 
-    var roomsItineraries = [{
+    var roomsDirections = [{
         'number': 'E2004',
-        'itinerary': 'Go left and right then up and down'
+        'direction': 'Go left and right then up and down'
       },
       {
         'number': 'E2001',
-        'itinerary': 'Go up and down'
+        'direction': 'Go up and down'
       }
     ];
 
@@ -140,7 +140,7 @@
         endTime = data[1].split(' ')[3];
         subject = data[2].split(' ')[1];
         room = data[3].split(' ')[1];
-        showData(data);
+        showClassInformation(data);
         $('#voices option:eq(1)').prop('selected', true);
         $('#message').val(content);
         $('#speak').click();
@@ -154,7 +154,7 @@
       }
     });
 
-    function showData(data) {
+    function showClassInformation(data) {
       $('#directions').fadeOut("slow");
       // empty text zone
       $('#directions').empty();
@@ -210,12 +210,12 @@
           $('#directions').append("<p class='tooLate'><strong>Too late!!!</strong></p>");
         }
       } else {
-        for (var i = 0; i < roomsItineraries.length; i++) {
-          if (roomsItineraries[i].number == room) {
+        for (var i = 0; i < roomsDirections.length; i++) {
+          if (roomsDirections[i].number == room) {
             $('#voices option:eq(1)').prop('selected', true);
-            $('#message').val(roomsItineraries[i].itinerary);
+            $('#message').val(roomsDirections[i].direction);
             $('#speak').click();
-            $('#directions').append("<p class='onTime'><strong>" + roomsItineraries[i].itinerary + "</strong></p>");
+            $('#directions').append("<p class='onTime'><strong>" + roomsDirections[i].direction + "</strong></p>");
           }
         }
       }
